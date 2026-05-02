@@ -305,15 +305,23 @@ def generate_subtitle_index(entries: List[SubtitleEntry], max_entries: int = 100
 
 # ==================== 缓存管理 ====================
 
-def save_subtitle_cache(bvid: str, info: SubtitleInfo, entries: Optional[List[SubtitleEntry]] = None) -> None:
+def save_subtitle_cache(bvid: str, info: SubtitleInfo, entries: Optional[List[SubtitleEntry]] = None, subtitle_lang: str = "") -> None:
     """保存字幕缓存
 
     Args:
         bvid: 视频BV号
         info: 字幕信息
         entries: 字幕条目（可选）
+        subtitle_lang: 实际下载的字幕语言（如 "中文"、"English"）
     """
     SUBTITLE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # 确定字幕语言
+    if not subtitle_lang and info.subtitle_url:
+        for lang in info.languages:
+            if lang.get("url") == info.subtitle_url:
+                subtitle_lang = lang.get("lang_doc", "")
+                break
 
     cache_data = {
         "bvid": bvid,
@@ -322,7 +330,8 @@ def save_subtitle_cache(bvid: str, info: SubtitleInfo, entries: Optional[List[Su
         "has_subtitle": info.has_subtitle,
         "languages": info.languages,
         "subtitle_url": info.subtitle_url,
-        "chapters": info.chapters,  # 新增：章节信息
+        "subtitle_lang": subtitle_lang,
+        "chapters": info.chapters,
         "indexed": entries is not None,
         "updated_at": datetime.now().isoformat()
     }
