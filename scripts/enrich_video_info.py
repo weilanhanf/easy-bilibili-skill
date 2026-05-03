@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ TID_MAP = {
 
 # ==================== 数据获取 ====================
 
-def get_video_detail(bvid: str, retry_count: int = 0) -> Optional[Dict[str, Any]]:
+def get_video_detail(bvid: str, retry_count: int = 0) -> Tuple[Optional[Dict[str, Any]], bool]:
     """获取视频详细信息
 
     Args:
@@ -107,11 +107,13 @@ def get_video_detail(bvid: str, retry_count: int = 0) -> Optional[Dict[str, Any]
         retry_count: 重试次数
 
     Returns:
-        视频详情数据
+        (视频详情数据, 是否触发限流)
     """
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Referer": f"https://www.bilibili.com/video/{bvid}/",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
     }
     if COOKIE:
         headers["Cookie"] = COOKIE
@@ -123,22 +125,29 @@ def get_video_detail(bvid: str, retry_count: int = 0) -> Optional[Dict[str, Any]
             data = json.load(resp)
 
         if data.get("code") != 0:
-            logger.error(f"获取视频详情失败: {data.get('message')}")
-            return None
+            msg = data.get("message", "")
+            code = data.get("code")
+            # 视频已删除或不存在，不算失败
+            if code in [62002, -404]:  # 稿件已删除/不存在
+                logger.info(f"视频已删除或不存在: {bvid}")
+                return None, False
+            if "请求过于频繁" in msg or code == 412:
+                logger.warning(f"触发限流: {bvid}")
+                return None, True
+            logger.error(f"获取视频详情失败({code}): {msg}")
+            return None, False
 
-        return data.get("data", {})
+        return data.get("data", {}), False
 
     except urllib.error.HTTPError as e:
         if e.code == 412:
-            logger.warning(f"触发反爬限制: {bvid}, 等待后重试...")
-            if retry_count < 3:
-                time.sleep(30)  # 等待30秒
-                return get_video_detail(bvid, retry_count + 1)
+            logger.warning(f"触发反爬限制(412): {bvid}")
+            return None, True
         logger.error(f"HTTP错误: {e}")
-        return None
+        return None, False
     except Exception as e:
         logger.error(f"获取视频详情异常: {e}")
-        return None
+        return None, False
 
 
 def get_player_info(bvid: str, aid: int, cid: int) -> Optional[Dict[str, Any]]:
@@ -513,7 +522,9 @@ def enrich_video(bvid: str) -> Tuple[bool, bool]:
             logger.warning(f"读取现有MD失败: {e}")
 
     # 获取视频详情
-    video_data = get_video_detail(bvid)
+    video_data, rate_limited = get_video_detail(bvid)
+    if rate_limited:
+        return False, True
     if not video_data:
         logger.error(f"获取视频详情失败: {bvid}")
         return False, False
@@ -579,47 +590,92 @@ def enrich_all_videos(limit: int = 0) -> None:
         bvids = bvids[:limit]
         total = limit
 
-    print(f"\n{'=' * 50}")
-    print("B站视频信息增强")
-    print(f"{'=' * 50}")
-    print(f"视频总数: {total}")
+    print(f"\n{'=' * 50}", flush=True)
+    print("B站视频信息增强", flush=True)
+    print(f"{'=' * 50}", flush=True)
+    print(f"视频总数: {total}", flush=True)
     if COOKIE:
-        print("Cookie状态: 已加载")
+        print("Cookie状态: 已加载", flush=True)
     else:
-        print("Cookie状态: 未加载")
+        print("Cookie状态: 未加载", flush=True)
 
     success = 0
     failed = 0
     rate_limit_hits = 0
     start_time = time.time()
+    consecutive_rate_limits = 0  # 连续限流计数
 
     for i, bvid in enumerate(bvids):
-        success_flag, rate_hit = enrich_video(bvid)
+        success_flag, rate_limited = enrich_video(bvid)
         if success_flag:
             success += 1
+            consecutive_rate_limits = 0
         else:
             failed += 1
-        if rate_hit:
+        if rate_limited:
             rate_limit_hits += 1
+            consecutive_rate_limits += 1
+            if consecutive_rate_limits >= 3:
+                print(f"\n连续限流{consecutive_rate_limits}次，暂停60秒...", flush=True)
+                time.sleep(60)
+                consecutive_rate_limits = 0
+            else:
+                time.sleep(5)
 
-        # 进度显示
-        if (i + 1) % 50 == 0 or (i + 1) == total:
-            elapsed = time.time() - start_time
-            rate = (i + 1) / elapsed if elapsed > 0 else 0
-            eta = (total - i - 1) / rate if rate > 0 else 0
-            print(f"进度: {i + 1}/{total} | 成功: {success} | 失败: {failed} | 限流: {rate_limit_hits} | ETA: {int(eta)}秒")
+        # 进度条显示
+        elapsed = time.time() - start_time
+        rate = (i + 1) / elapsed if elapsed > 0 else 0
+        eta = (total - i - 1) / rate if rate > 0 else 0
+        percent = (i + 1) / total * 100
+        bar_len = 30
+        filled = int(bar_len * (i + 1) / total)
+        bar = '#' * filled + '-' * (bar_len - filled)
+        print(f"\r[{bar}] {i+1}/{total} ({percent:.1f}%) | OK:{success} FAIL:{failed} | ETA:{int(eta)}s", end='', flush=True)
 
-        # 动态延迟：成功时短延迟，失败时长延迟
-        time.sleep(0.1)  # 减少延迟到0.1秒
+        time.sleep(0.05)
+
+    print(flush=True)  # 完成后换行
 
     elapsed = time.time() - start_time
-    print(f"\n{'=' * 50}")
-    print(f"增强完成")
-    print(f"成功: {success}")
-    print(f"失败: {failed}")
-    print(f"限流次数: {rate_limit_hits}")
-    print(f"总耗时: {int(elapsed)}秒")
-    print(f"{'=' * 50}")
+    print(f"\n{'=' * 50}", flush=True)
+    print(f"增强完成", flush=True)
+    print(f"成功: {success}", flush=True)
+    print(f"失败: {failed}", flush=True)
+    print(f"限流次数: {rate_limit_hits}", flush=True)
+    print(f"总耗时: {int(elapsed)}秒 ({int(elapsed//60)}分{int(elapsed%60)}秒)", flush=True)
+    print(f"{'=' * 50}", flush=True)
+
+    # 更新进度文件
+    update_sync_progress(total, success, failed, rate_limit_hits, "completed")
+
+
+def update_sync_progress(total: int, success: int, failed: int, rate_limits: int, status: str) -> None:
+    """更新同步进度文件"""
+    progress_file = KNOWLEDGE_DIR / "sync_progress.json"
+
+    try:
+        if progress_file.exists():
+            with open(progress_file, "r", encoding="utf-8") as f:
+                progress = json.load(f)
+        else:
+            progress = {}
+
+        progress["video_info_enrich"] = {
+            "total": total,
+            "completed": success,
+            "success": success,
+            "failed": failed,
+            "rate_limits": rate_limits,
+            "percentage": f"{success * 100 / total:.1f}%" if total > 0 else "0%",
+            "status": status,
+            "updated_at": datetime.now().isoformat()
+        }
+
+        KNOWLEDGE_DIR.mkdir(parents=True, exist_ok=True)
+        with open(progress_file, "w", encoding="utf-8") as f:
+            json.dump(progress, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.warning(f"更新进度文件失败: {e}")
 
 
 def main():
@@ -630,15 +686,15 @@ def main():
     args = parser.parse_args()
 
     if args.bvid:
-        print(f"\n{'=' * 50}")
-        print("B站视频信息增强")
-        print(f"{'=' * 50}")
-        print(f"目标视频: {args.bvid}")
+        print(f"\n{'=' * 50}", flush=True)
+        print("B站视频信息增强", flush=True)
+        print(f"{'=' * 50}", flush=True)
+        print(f"目标视频: {args.bvid}", flush=True)
         success_flag, _ = enrich_video(args.bvid)
         if success_flag:
-            print("\n成功！")
+            print("\n成功！", flush=True)
         else:
-            print("\n失败！")
+            print("\n失败！", flush=True)
     else:
         enrich_all_videos(args.limit)
 

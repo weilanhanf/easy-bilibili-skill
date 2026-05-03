@@ -1,4 +1,4 @@
-# Easy-Bilibili
+# Easy-Bilibili-Skill
 
 > B站个人视频知识库 - 一个专为B站收藏智能检索设计的 AI Skill 项目
 
@@ -24,7 +24,7 @@
 ## 📁 项目结构
 
 ```
-easy-bilibili/
+easy-bilibili-skill/
 ├── .agent/
 │   └── skills/
 │       └── easy-bilibili/
