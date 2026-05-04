@@ -14,6 +14,9 @@ knowledge/followings/data_structure.md
 # 缓存数据
 knowledge/cache/
 
+# 测试结果（含用户数据）
+tests/integration_results.json
+
 # ===== Python =====
 __pycache__/
 *.py[cod]
