@@ -1,9 +1,41 @@
 ---
 name: easy-bilibili
-description: B站个人视频知识库检索助手。核心流程：(1)验证触发条件 (2)分层索引导航 (3)渐进式精准检索 (4)结构化输出。用户问题包含"B站搜索/B站收藏/B站关注/哔哩哔哩/我的B站"关键词，或明确调用`/easy-bilibili`时使用。
+description: 📺 B站收藏智能检索。输入 `/easy-bilibili` 查看使用帮助。支持：搜索收藏视频、查询关注UP主、同步B站数据、字幕内容检索。触发关键词：B站、哔哩哔哩、bilibili。
 ---
 
 # B站个人视频知识库检索 Skill（easy-bilibili）
+
+## 📺 快速使用指南
+
+**使用方式**：直接输入问题，包含"B站"关键词即可触发。
+
+### 常用命令示例
+
+| 功能 | 示例 |
+|------|------|
+| 🔍 搜索视频 | `B站搜索 Java 教程` |
+| 📁 收藏夹查询 | `我的B站收藏有哪些视频` |
+| 👀 观看状态 | `B站收藏中未看的视频` |
+| 👥 关注UP主 | `我关注的B站UP主有哪些` |
+| 🔄 同步数据 | `同步我的B站收藏` |
+| 📝 字幕搜索 | `B站视频里讲了什么` |
+
+### 首次使用
+
+```bash
+# 1. 配置 Cookie（获取方式见下方）
+python scripts/login.py
+
+# 2. 验证登录
+python scripts/login.py --check
+
+# 3. 同步数据
+python scripts/sync.py
+```
+
+**获取 Cookie**：登录 bilibili.com → F12 → Network → 刷新 → 复制任意请求的 Cookie
+
+---
 
 ## 知识库结构说明
 
