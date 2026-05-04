@@ -17,6 +17,10 @@ knowledge/cache/
 # 测试结果（含用户数据）
 tests/integration_results.json
 
+# 开发文档和测试（不推送到仓库）
+docs/
+tests/
+
 # ===== Python =====
 __pycache__/
 *.py[cod]
