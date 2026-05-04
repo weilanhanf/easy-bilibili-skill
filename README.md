@@ -43,7 +43,7 @@
 | 🔍 组合检索 | 支持多关键词组合搜索，正则精准匹配 |
 | 📊 观看状态 | 支持筛选未看/已看/部分观看的视频 |
 | 👥 关注管理 | 同步关注的UP主信息 |
-| 🔤 字幕检索 | 支持视频字幕内容搜索 |
+| 🔤 字幕检索 | 支持视频字幕内容搜索（需UP主上传字幕） |
 
 ---
 
@@ -172,6 +172,7 @@ easy-bilibili-skill/
 - **Cookie 有效期**：约 30 天，过期后重新配置即可
 - **同步频率**：按需同步，避免频繁调用触发反爬
 - **数据范围**：仅支持检索自己的收藏数据
+- **字幕检索**：仅支持UP主已上传字幕的视频（约60-70%覆盖率）
 
 ---
 
@@ -204,6 +205,7 @@ A powerful skill that lets you search your Bilibili favorites using natural lang
 | 🔍 Combined Search | Multi-keyword regex matching |
 | 📊 Watch Status | Filter by unwatched/watched/partially watched |
 | 👥 Following Sync | Sync followed UP owners |
+| 🔤 Subtitle Search | Search video subtitles (requires UP owner uploaded) |
 
 ### Installation
 
