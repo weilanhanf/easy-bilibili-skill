@@ -85,20 +85,34 @@ pip install requests>=2.28.0
 
 ### 第一步：配置 Cookie
 
-B站收藏数据需要登录才能访问：
+B站收藏数据需要登录才能访问。提供两种登录方式：
 
-1. 登录 [bilibili.com](https://www.bilibili.com)
-2. 按 `F12` → Network → 刷新页面
-3. 点击任意请求 → Headers → 复制 Cookie 整行
-4. 运行配置脚本：
+#### 方式一：扫码登录（推荐，最简单）
 
 ```bash
 python scripts/login.py
 ```
 
-按提示粘贴 Cookie，脚本会自动验证并保存。
+运行后会显示二维码，用 **B站 App** 扫码即可自动完成登录。无需手动复制任何内容！
 
-**Cookie 有效期**：约 30 天，过期后重新运行 `login.py` 更新即可。
+> 如果终端不支持显示二维码，脚本会自动打开浏览器，用手机扫码即可。
+
+#### 方式二：手动输入 Cookie
+
+如果扫码登录失败，可以手动输入：
+
+```bash
+python scripts/login.py --cookie
+```
+
+按提示从浏览器复制完整 Cookie：
+
+1. 登录 [bilibili.com](https://www.bilibili.com)
+2. 按 `F12` → Network → 刷新页面
+3. 点击任意请求 → Headers → 复制 Cookie 整行
+4. 粘贴到脚本中
+
+**Cookie 有效期**：约 30 天，过期后重新运行 `login.py` 即可。
 
 ### 第二步：验证登录
 
