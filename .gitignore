@@ -2,37 +2,20 @@
 # 用户配置（含Cookie）
 config.json
 
-# 用户真实收藏数据（保留模板和.gitkeep）
+# 用户真实收藏数据（示例数据在 examples/ 目录）
 knowledge/videos/BV*.md
-!knowledge/videos/BV1WE411K7bD.md
-!knowledge/videos/BV1xW411K7cM.md
-!knowledge/videos/BV1cJ411s7kS.md
-!knowledge/videos/BV1y7411L7tR.md
-!knowledge/videos/BV1T7411L7vY.md
-!knowledge/videos/BV1Pa411w7iZ.md
-!knowledge/videos/BV1sJ41117HY.md
-!knowledge/videos/BV1o44y1y7AN.md
-!knowledge/videos/BV1S34y1Q7MY.md
-!knowledge/videos/BV1Y44y1r7Fj.md
-
 knowledge/folders.md
-!knowledge/folders.example.md
-
 knowledge/data_structure.md
-!knowledge/data_structure.example.md
 
-# 用户关注数据（保留模板和.gitkeep）
+# 用户关注数据
 knowledge/followings/up_*.md
-!knowledge/followings/up_1226726.md
-!knowledge/followings/up_290426283.md
-!knowledge/followings/up_18643874.md
-!knowledge/followings/up_302417610.md
-
 knowledge/followings/data_structure.md
-!knowledge/followings/data_structure.example.md
 
 # 缓存数据
 knowledge/cache/
+
+# 保留示例数据目录（不排除）
+!knowledge/examples/
 
 # 测试结果（含用户数据）
 tests/integration_results.json
